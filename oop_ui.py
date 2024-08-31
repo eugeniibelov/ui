@@ -3,19 +3,12 @@
 # Новая реализация библиотеки для отрисовки простого
 # интерфейса для работы с таблицами
 
-from os import get_terminal_size
-
-VERSION = '0.0.2-9
+VERSION = '0.0.2-9'
 
 class Table():
 
-    @staticmethod
-    def line():
-        '''Печатает горизонтальную линию'''
-        print('-' * get_terminal_size()[0])
-
     @classmethod
-    def cols(cls,arr):
+    def cols(cls, arr):
         '''Возвращает количество колонок таблицы'''
         return max([len(row) for row in arr])
 
@@ -48,7 +41,7 @@ class Table():
     @classmethod
     def get_sep_len(cls, arr, widths):
         '''Возвращает ширину пустого пространства между колонками'''
-        tw = get_terminal_size()[0]
+        tw = os.get_terminal_size()[0]
         sep_len = (tw - sum(widths)) // (len(widths) + 1)
         while sum(widths) + (Table.cols(arr) + 1) * sep_len > tw:
             sep_len -= 1
@@ -81,25 +74,9 @@ class Header(Table):
         self.widths = Table.get_item_widths(self.view)
         self.sep_len = Table.get_sep_len(self.view, self.widths)
 
-    def print(self, sep=' '):
-        '''Выводит таблицу с заданными разделителями'''
-        Table.line()
-        for row in self.view:
-            for c in range(len(row)):
-                print('%s%-*s' % (sep * self.sep_len, self.widths[c], row[c]), end='')
-            else:
-                print('%s' % (sep * self.sep_len,))
-        Table.line()
-
-
-Header('sgfdfgdfgfd').print()
-
-
-
-
 class Menu(Table):
     @classmethod
-    def get_view(cls, arr, cols):
+    def get_view(cls, arr, cols, sb=True):
         '''Возвращает таблицу сведенную до указанного количества колонок'''
         if cols == 0:
             raise ValueError("Cols must be bigger than 0")
@@ -109,7 +86,11 @@ class Menu(Table):
         for row in arr:
             for item in row:
                 if len(item) > 0:
-                    items.append(''.join(['[', item[0], ']', item[1:]]))
+                    if sb:
+                        items.append(''.join(['[', item[0], ']', item[1:]]))
+                    else:
+                        items.append(item)
+
 
         while len(items) > 0:
             t = []
@@ -120,9 +101,62 @@ class Menu(Table):
 
         return menu_lst
 
-    def __init__(self, arr, cols):
+    def __init__(self, arr, cols, sb=True):
         '''Конструктор класса Menu'''
-        self.view = Menu.get_view(arr, cols)
+        self.view = Menu.get_view(arr, cols, sb)
         self.widths = Table.get_item_widths(self.view)
         self.sep_len = Table.get_sep_len(self.view, self.widths)
 
+class Screen():
+    @classmethod
+    def line(cls):
+        '''Печатает горизонтальную линию'''
+        print('-' * os.get_terminal_size()[0])
+
+    @classmethod
+    def clear(cls):
+        '''Очищает экран'''
+        print('\033[H\033[2J', end='')
+
+    def __init__(self, title, body, menu, menu_col, sb=True):
+        '''Конструктр объекта Screen'''
+        self.h = Header(title)
+        self.b = Table(body)
+        self.m = Menu(menu, menu_col, sb)
+
+
+    def print(self):
+        Screen.clear()
+        Screen.line()
+        self.h.print()
+        Screen.line()
+
+        self.b.print()
+        Screen.line()
+        self.m.print()
+        Screen.line()
+        
+
+import os
+import sqlite3
+
+MY_DB_DIR = os.path.join(os.environ['HOME'], '.my_db')
+DB_NAME = os.path.join(MY_DB_DIR, 'jtt-data.db')
+
+con = sqlite3.connect(DB_NAME)
+cur = con.cursor()
+def get_period_data(cur, current_period):
+    res = cur.execute("SELECT rowid, * FROM period_data WHERE date LIKE ? ORDER BY date", (current_period + '-%', )).fetchall()
+    if res is None:
+        return [(''),]
+    else:
+        return res
+
+current_period = (cur.execute("SELECT date()").fetchone())[0][:7]
+data = get_period_data(cur, current_period)
+
+jtt_main = Screen(
+    'Job-time-tracker', data, [('sdf', 'dfh'), ('',)], 2
+
+)
+jtt_main.print()
