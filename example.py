@@ -1,33 +1,29 @@
-from oop_ui import Header, Table, Menu, Screen
+from oop_ui import *
 
 h = 'Текст заголовка'
-body = [
+b1 = [
         ('Данные', 'в', 'виде'), 
         ('списка', 'кортежей'), 
         ('со', 'строками'),
 ]
-menu = [
+b2 = [
+        ('Данные', 'в', 'виде'), 
+        ('списка', 'кортежей'), 
+        ('со', 'строками', 'еще один вариант'),
+]
+
+m = [
         ('Список',), 
         ('элементов', 'меню'), 
         ('который', 'может', 'быть'), 
         ('разбит', 'на любое количество колонок')
 ]
 
-# Можно создать отдельные заголовок, тело или меню
-# Или использовать объект Screen
-h1 = Header(h)
-b1 = Table(body)
-m1 = Menu (menu, 3)
-m2 = Menu (menu, 2, False)
-s1 = Screen(h, body, menu, 3)
 
-s1.print()
+s = Screen(
+        header = h,
+        body = [b1 , b2],
+        menu = m, cols = 5
+)
 
-Screen.line()
-h1.print()
-Screen.line()
-b1.print()
-Screen.line()
-m1.print()
-Screen.line()
-
+s.display()

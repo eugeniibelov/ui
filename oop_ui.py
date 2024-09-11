@@ -3,7 +3,7 @@
 # Новая реализация библиотеки для отрисовки простого
 # интерфейса для работы с таблицами
 
-VERSION = '0.0.3-0'
+VERSION = '0.0.3-1'
 
 class Table():
 
@@ -37,12 +37,11 @@ class Table():
     # Возвращает таблицу в ровном виде
     # Или преобразует до нужного количества колонок
     def get_view(cls, arr, needed_cols=None):
-
-        if type(arr) == str:
-            return [(arr,)]
-
-        if type(arr) not in (list, tuple, str):
+        if not isinstance(arr, (list, tuple, str)):
             raise ValueError(f'Expected list-of-tuples or string (if you need a header), given {type(arr)}')
+
+        if isinstance(arr, str):
+            return [(arr,)]
 
         menu_lst = []
 
@@ -84,3 +83,75 @@ class Table():
                 print('%s%-*s' % (sep * sep_len, widths[c], row[c]), end='')
             else:
                 print('%s' % (sep * sep_len,))
+
+
+class Screen():
+    @classmethod
+    # рисует линию шириной с экран заданным символом
+    def line(cls, c='-'):
+        from os import get_terminal_size
+        print(c * get_terminal_size()[0])
+
+    @classmethod
+    # Очищает экран
+    def clear(cls): print('\033[H\033[2J', end='')
+
+    # Конструктр объекта Screen
+    # Принимает именованные параметры, где 
+    # header - заголовок
+    # body - список с основными табличными данными
+    # menu - список строк для меню
+    # cols - целое число колонок меню
+    def __init__(self, **kwargs):
+
+        if (
+                kwargs.get('header', False) and
+                isinstance(kwargs['header'], str) and
+                len(kwargs['header']) > 0
+        ):
+            self.__header = Table(kwargs['header'])
+        else:
+            self.__header = None
+
+
+        if (
+                kwargs.get('body', False) and
+                isinstance(kwargs['body'], list)
+        ):
+            self.__body = [Table(i) for i in kwargs['body']]
+        else:
+            self.__body = None
+
+
+        if (
+            (
+                kwargs.get('menu', False) and
+                kwargs.get('cols', False)
+            ) and
+            (
+                isinstance(kwargs['menu'], list) and
+                isinstance(kwargs['cols'], int)
+            )
+        ):
+            self.__menu = Table(kwargs['menu'], kwargs['cols'])
+        else:
+            self.__menu = None
+
+
+    def display(self, c='-'):
+        Screen.clear()
+        if self.__header:
+            Screen.line(c)
+            self.__header.show()
+
+        Screen.line(c)
+
+        if self.__body:
+            for i in self.__body:
+                i.show()
+                Screen.line(c)
+
+        if self.__menu:
+            self.__menu.show()
+            Screen.line(c)
+
