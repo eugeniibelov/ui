@@ -43,28 +43,35 @@ class Table():
         if isinstance(arr, str):
             return [(arr,)]
 
+        for idx in range(len(arr)):
+            if isinstance(arr[idx], str):
+                arr[idx] = (arr[idx],)
+
         menu_lst = []
-
-        if needed_cols is None:
-            t = []
-            for row in arr:
-                while len(row) < Table._cols(arr):
-                    row = row + ('',)
-                menu_lst.append(row)
-        else:
-            # Получаем один список строк из списка кортежей
-            items = []
-            for row in arr:
-                for item in row:
-                    if len(str(item)) > 0:
-                        items.append(item)
-
-            while len(items) > 0:
+        try:
+            if needed_cols is None:
                 t = []
-                for i in range(needed_cols):
-                    try: t.append(items.pop(0))
-                    except: t.append('')
-                menu_lst.append(tuple(t))
+                for row in arr:
+                    while len(row) < Table._cols(arr):
+                        row = row + ('',)
+                    menu_lst.append(row)
+            else:
+                # Получаем один список строк из списка кортежей
+                items = []
+                
+                for row in arr:
+                    for item in row:
+                        if len(str(item)) > 0:
+                            items.append(item)
+
+                while len(items) > 0:
+                    t = []
+                    for i in range(needed_cols):
+                        try: t.append(items.pop(0))
+                        except: t.append('')
+                    menu_lst.append(tuple(t))
+        except ValueError:
+            menu_lst = None
 
         return menu_lst
 
@@ -74,15 +81,18 @@ class Table():
 
     # Выводит таблицу с заданными разделителями
     def show(self, sep=' '):
+        if self.view:
 
-        widths = Table._get_item_widths(self.view)
-        sep_len = Table._get_sep_len(self.view, widths)
+            widths = Table._get_item_widths(self.view)
+            sep_len = Table._get_sep_len(self.view, widths)
 
-        for row in self.view:
-            for c in range(len(row)):
-                print('%s%-*s' % (sep * sep_len, widths[c], row[c]), end='')
-            else:
-                print('%s' % (sep * sep_len,))
+            for row in self.view:
+                for c in range(len(row)):
+                    print('%s%-*s' % (sep * sep_len, widths[c], row[c]), end='')
+                else:
+                    print('%s' % (sep * sep_len,))
+        else:
+            print('Нет данных для отображения...')
 
 
 class Screen():
